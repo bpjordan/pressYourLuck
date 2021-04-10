@@ -51,6 +51,11 @@ class GameGui(Frame):
 		#We also have to keep track of what part of the game we are in
 		self.gameState = 0 #states: 0-trivia, 1-spinner
 
+		self.initGPIO()
+		self.initGUI()
+
+		self.shuffleBoard()
+
 
 	#Initializer functions
 	def initGPIO(self):
@@ -61,21 +66,34 @@ class GameGui(Frame):
 			GPIO.add_event_detect(button, GPIO.RISING, bouncetime=100)
 
 	def initGUI(self):
-		pass
+		for row in range(5):
+			Grid.rowconfigure(self, row, weight = 1)
+		for col in range(6):
+			Grid.columnconfigure(self, col, weight = 1)
+
+	def shuffleBoard(self):
+		self.validBoxes = [(x,y) for x in range(6) for y in range(5) if (x < 1 or x > 4) or (y < 1 or y > 3)]
+		print(self.validBoxes)
+		print(len(self.validBoxes))
+
+		for x,y in self.validBoxes:
+			self.placeholder = Label(self, text="{},{}".format(x,y), font=("Calibri", 35))
+			self.placeholder.grid(row=y, column=x)
 
 	def addTrivia(self):
 		#get a trivia question and put it in the middle of the screen
 		#TODO: Make this a lot prettier
+
+		#Get a question from the trivia object
 		self.currQuestion, self.currAnswers = self.trivia.generateQuestion()
-		self.questionDisplay = Label(self, text="", anchor=CENTER,\
-			bg= "white", height=2, font = ("Calibri", 100))
-		self.questionDisplay.grid(row = 1, column = 1, columnspan = 4)
 
-		self.answerText = self.currAnswers.keys()
-		self.questionDisplay['text'] += "{}\n\nA. {}\nB. {}\nC. {}"\
-			.format(self.currQuestion, self.currAnswers[0], self.currAnswers[1], self.currAnswers[2])
+		#Parse the question data into something we can display
+		self.answerText = list(self.currAnswers.keys())
+		self.questionText = "{}\n\nA. {}\nB. {}\nC. {}".format(self.currQuestion, self.answerText[0], self.answerText[1], self.answerText[2])
 
-		self.pack(fill=BOTH, expand=1)
+		#Hopefully, display the question in the middle of the grid
+		self.questionDisplay = Label(self, text=self.questionText, bg= "white", font = ("Calibri", 50))
+		self.questionDisplay.grid(row = 0, column = 0, columnspan = 4, rowspan = 3)
 
 	def startSpin(self):
 		#clear the middle of the screen and shuffle the board
@@ -88,14 +106,16 @@ class GameGui(Frame):
 		#If we are in trivia
 		if self.gameState == 0:
 			#do trivia things
+			self.addTrivia()
 		#Otherwise, we are spinning
 		else:
 			#so do spinny things
 			pass
 		
 
+		self.pack(fill=BOTH, expand=1)
 		#be like goofy and do it again
-		parent.after(TICKRATE, self.gameTick, parent)
+		# parent.after(TICKRATE, self.gameTick, parent)
 		
 		
 
@@ -107,11 +127,10 @@ def main():
 	window.attributes("-fullscreen", True)
 
 	game = GameGui(window)
-	game.initGPIO()
 
 	game.gameTick(window)
 
-	# window.mainloop()
+	window.mainloop()
 
 	GPIO.cleanup()
 
