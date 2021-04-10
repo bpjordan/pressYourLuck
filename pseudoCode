@@ -1,0 +1,44 @@
+Trivia Module
+  Question
+    - prompt=str
+    - answers=dict{text=bool}
+  Trivia Game
+    - questions:list[Questions]
+    - generateQuestion()
+      - removes random question from list
+      - returns prompt and answers
+      
+Spin Module
+  Box(PhotoImage)
+    - isHighlighted=bool
+    -img=str
+  Whammy(Box)
+    -
+  SpinGame
+    - boxes{lists}
+    - populate()
+      - returns list of boxes
+      
+Game Module  
+  GameGui(Frame)
+    - players=list[player]
+    - highlightedBox=box
+    - populateBoard()
+      - SpinGame.populate()
+        - fills grid from list
+    - askTrivia(maxSpins)
+      - TriviaGame.generateQuestion()
+    - spin(shuffle:bool=false)
+      - unhighlights current box
+      - if shuffle:
+        - self.populateBoard()
+      - highlight new box
+    - play() ENTRY POINT
+    
+    Players
+      - bank=int
+      - passedSpins=int
+      - PassTo(player)
+        - player.passedSpins=self.spins
+        - self.spins=0
+ 
