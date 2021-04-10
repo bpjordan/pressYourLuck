@@ -1,4 +1,4 @@
-from tk import *
+from tkinter import *
 
 class Box(PhotoImage):
 	def __init__(self, img:str, value:int):
