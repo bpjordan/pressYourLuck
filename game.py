@@ -47,22 +47,50 @@ class GameGui(Frame):
 
 		#We must keep track of the highlighterd box in order to un-highlight it more easily		
 		self.highlightedBox = None
+
+		#We also have to keep track of what part of the game we are in
 		self.gameState = 0 #states: 0-trivia, 1-spinner
 
+
+	#Initializer functions
 	def initGPIO(self):
 		GPIO.setmode(GPIO.BCM)
 		pins = [PLAYER0, PLAYER1, PLAYER2]
-		GPIO.setup(pins, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 		for button in pins:
-			GPIO.add_event_detect(button)
+			GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+			GPIO.add_event_detect(button, GPIO.RISING, bouncetime=100)
+
+	def initGUI(self):
+		pass
+
+	def addTrivia(self):
+		#get a trivia question and put it in the middle of the screen
+		#TODO: Make this a lot prettier
+		self.currQuestion, self.currAnswers = self.trivia.generateQuestion()
+		self.questionDisplay = Label(self, text="", anchor=CENTER,\
+			bg= "white", height=2, font = ("Calibri", 100))
+		self.questionDisplay.grid(row = 1, column = 1, columnspan = 4)
+
+		self.answerText = self.currAnswers.keys()
+		self.questionDisplay['text'] += "{}\n\nA. {}\nB. {}\nC. {}"\
+			.format(self.currQuestion, self.currAnswers[0], self.currAnswers[1], self.currAnswers[2])
+
+		self.pack(fill=BOTH, expand=1)
+
+	def startSpin(self):
+		#clear the middle of the screen and shuffle the board
+		pass
 
 	def gameTick(self, parent):
-		#Tasks to do every game update
+		'''
+		Tasks that must be completed every game update
+		'''
+		#If we are in trivia
 		if self.gameState == 0:
 			#do trivia things
-			pass
+		#Otherwise, we are spinning
 		else:
-			#do spinny things
+			#so do spinny things
 			pass
 		
 
@@ -74,7 +102,7 @@ class GameGui(Frame):
 	
 
 def main():
-	#witchcraft that initializes the GUI
+	#start with the witchcraft that initializes the GUI
 	window = Tk()
 	window.attributes("-fullscreen", True)
 
@@ -83,7 +111,7 @@ def main():
 
 	game.gameTick(window)
 
-	#window.mainloop()
+	# window.mainloop()
 
 	GPIO.cleanup()
 
