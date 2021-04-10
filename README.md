@@ -1,5 +1,6 @@
 # Press Your Luck
 A python recreation of the Press Your Luck gameshow
+
 Created by Bronson Jordan, Garrett Lee, and JJ Virga for CYEN 132 at LA Tech
 
 This text doc contains a link of the outlined rules for playing PYL.
