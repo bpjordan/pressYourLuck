@@ -1,6 +1,7 @@
 from trivia import *
 from spin import *
 from tkinter import *
+import random
 
 #Useful little dummy module to use instead of always testing on an rpi
 #install with pip install Mock.GPIO
@@ -16,6 +17,9 @@ TICKRATE = 500
 PLAYER0 = 23
 PLAYER1 = 24
 PLAYER2 = 25
+
+HIGHLIGHTCOLOR = 'yellow2'
+UNHIGHLIGHTCOLOR = 'dim gray'
 
 
 #Player Class, pretty self explanatory
@@ -49,7 +53,12 @@ class GameGui(Frame):
 		self.highlightedBox = None
 
 		#We also have to keep track of what part of the game we are in
-		self.gameState = 0 #states: 0-trivia, 1-spinner
+		self.gameState = 1 #states: 0-trivia, 1-spinner
+
+
+		self.validBoxes = [(x,y) for x in range(6) for y in range(5) if (x < 1 or x > 4) or (y < 1 or y > 3)]
+
+		self.addTrivia() #TODO: Remove this once it is handled by gameTick
 
 		self.initGPIO()
 		self.initGUI()
@@ -72,13 +81,27 @@ class GameGui(Frame):
 			Grid.columnconfigure(self, col, weight = 1)
 
 	def shuffleBoard(self):
-		self.validBoxes = [(x,y) for x in range(6) for y in range(5) if (x < 1 or x > 4) or (y < 1 or y > 3)]
-		print(self.validBoxes)
-		print(len(self.validBoxes))
 
 		for x,y in self.validBoxes:
-			self.placeholder = Label(self, text="{},{}".format(x,y), font=("Calibri", 35))
-			self.placeholder.grid(row=y, column=x)
+			placeholder = Label(self, text="{}".format((x,y)), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
+			placeholder.grid(row=y, column=x, sticky = N+S+E+W)
+
+	def highlightNewBox(self):
+		possibleLocations = list(filter(lambda box: box is not self.highlightedBox, self.validBoxes))
+		newBox = random.choice(possibleLocations)
+
+		#Unhighlight the old box
+		if self.highlightedBox is not None:
+			placeholder = Label(self, text="{}".format(self.highlightedBox), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
+			placeholder.grid(column=self.highlightedBox[0], row=self.highlightedBox[1], sticky=N+S+E+W)
+
+		#highlight the new box
+		placeholder = Label(self, text="{}".format(newBox), font=("Calibri", 35), bg=HIGHLIGHTCOLOR, borderwidth=10, relief='solid')
+		placeholder.grid(column=newBox[0], row=newBox[1], sticky=N+S+E+W)
+
+		#note the newly old highlighted box (try puzzling out THAT comment)
+		self.highlightedBox = newBox
+
 
 	def addTrivia(self):
 		#get a trivia question and put it in the middle of the screen
@@ -93,7 +116,7 @@ class GameGui(Frame):
 
 		#Hopefully, display the question in the middle of the grid
 		self.questionDisplay = Label(self, text=self.questionText, bg= "white", font = ("Calibri", 50))
-		self.questionDisplay.grid(row = 0, column = 0, columnspan = 4, rowspan = 3)
+		self.questionDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
 
 	def startSpin(self):
 		#clear the middle of the screen and shuffle the board
@@ -109,13 +132,12 @@ class GameGui(Frame):
 			self.addTrivia()
 		#Otherwise, we are spinning
 		else:
-			#so do spinny things
-			pass
+			self.highlightNewBox()
 		
 
 		self.pack(fill=BOTH, expand=1)
 		#be like goofy and do it again
-		# parent.after(TICKRATE, self.gameTick, parent)
+		parent.after(TICKRATE, self.gameTick, parent)
 		
 		
 
