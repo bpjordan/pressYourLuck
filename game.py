@@ -1,5 +1,5 @@
-from trivia import *
-from spin import *
+from trivia import Question, TriviaGame
+from spin import Box, Whammy, SpinGame
 from tkinter import *
 import random
 
