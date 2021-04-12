@@ -8,6 +8,7 @@ import random
 try:
     import RPi.GPIO as GPIO
 except (RuntimeError, ModuleNotFoundError):
+	print("GPIO not connected. Defaulting to mock GPIO library")
 	import Mock.GPIO as GPIO
 
 #Delay in ms between game updates
