@@ -10,7 +10,8 @@ Trivia Module
       
 Spin Module
   Box(PhotoImage)
-    - position:tuple(x,y)
+    - positionX
+	- positionY
     - isHighlighted=bool
     -img=str
   Whammy(Box)
