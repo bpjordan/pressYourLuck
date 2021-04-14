@@ -15,6 +15,8 @@ except (RuntimeError, ModuleNotFoundError):
 	def add_event_detect(channel,edge,callback = None,bouncetime = None):
 		pass
 
+	GPIO.add_event_detect = add_event_detect
+
 #Delay in ms between game updates
 TICKRATE = 500
 
