@@ -11,6 +11,10 @@ except (RuntimeError, ModuleNotFoundError):
 	print("GPIO not connected. Defaulting to mock GPIO library")
 	import Mock.GPIO as GPIO
 
+	#Redefine this function with the right parameters so it doesn't break everything
+	def add_event_detect(channel,edge,callback = None,bouncetime = None):
+		pass
+
 #Delay in ms between game updates
 TICKRATE = 500
 
