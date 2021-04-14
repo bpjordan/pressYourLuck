@@ -2,7 +2,7 @@ from trivia import Question, TriviaGame
 from spin import Box, Whammy, SpinGame
 from tkinter import *
 import random
-
+#bronson dumb
 #Useful little dummy module to use instead of always testing on an rpi
 #install with pip install Mock.GPIO
 try:
