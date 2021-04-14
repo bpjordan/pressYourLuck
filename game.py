@@ -14,7 +14,8 @@ except (RuntimeError, ModuleNotFoundError):
 	#Redefine this function with the right parameters so it doesn't break everything
 	def add_event_detect(channel,edge,callback = None,bouncetime = None):
 		pass
-
+	
+	#Make this function replace the one in the GPIO library
 	GPIO.add_event_detect = add_event_detect
 
 #Delay in ms between game updates
