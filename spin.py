@@ -6,6 +6,7 @@ class Box(PhotoImage):
 
 class Whammy(Box):
 	def __init__(self):
+                
 		pass
 
 class SpinGame:
