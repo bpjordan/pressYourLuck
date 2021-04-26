@@ -1,7 +1,8 @@
 Trivia Module
   Question
     - prompt=str
-    - answers=dict{text=bool}
+	- entire question with a string of answers
+    - answers=int (0,1,2) for correct answer
   Trivia Game
     - questions:list[Questions]
     - generateQuestion()
@@ -10,17 +11,20 @@ Trivia Module
       
 Spin Module
   Box(PhotoImage)
-    - positionX
-	- positionY
-    - isHighlighted=bool
-    -img=str
+    - store img and value
+    - img=str
+    - value=int
+    - affect(Player) fn that add box value to player
   Whammy(Box)
-    -
+    - box with negative value
+    - override affect(Player) fn to clear bank and add a whammy to totalWhammies
   SpinGame
-    - boxes{lists}
+    - puts boxs into boxes{lists}
     - populate()
+      - adds certain number of prizeboxs and whammys
+      - shuffle boxes
       - returns list of boxes
-      
+
 Game Module  
   GameGui(Frame)
     - players=list[player]

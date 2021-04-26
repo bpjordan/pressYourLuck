@@ -2,9 +2,10 @@ from tkinter import *
 from random import *
 
 class Box(PhotoImage):
-	def __init__(self, img:str, value:int):
+	def __init__(self, img:str, value:int):              
+            self.img = img
+            self.value = value
                 
-		pass
 # a prize box is
 # - an int value
 # - an image 
@@ -13,7 +14,7 @@ class Box(PhotoImage):
 # - a fn that adds its value to the players bank
 class PrizeBox(PhotoImage):
         def __init__(self):
-                pass
+            super().__init__(img,value)
 
 # a whammy is
 # - a prize box with specific conditions
@@ -26,23 +27,21 @@ class PrizeBox(PhotoImage):
 # - maybe a function that clears a players bank and adds a whammy to their whammy count
 class Whammy(Box):
 	def __init__(self):
-                super().__init__(parent)
-                self.cords
+            super().__init__(img,value)     
 
         @property
         def whammy(self):
-                return self._whammy
+            return self._whammy
         @whammy.setter
         def whammy(self, rand):
-                self._whammy = PhotoImage(file="Whammy{}.png".format(randint(1,10))
-                
+            self._whammy = PhotoImage(file="Whammy{}.png".format(randint(1,10))
+                     
 
 class SpinGame:
-	def __init__(self):
-		pass
+    pass
 
 ########
 # MAIN #
 ########
 
-PhotoImage(file="{}.png")
+#PhotoImage(file="{}.png")
