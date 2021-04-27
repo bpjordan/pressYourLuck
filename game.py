@@ -29,6 +29,8 @@ ANSWERA = 18
 ANSWERB = 19
 ANSWERC = 20
 
+NUMPLAYERS = 2
+
 HIGHLIGHTCOLOR = 'yellow2'
 UNHIGHLIGHTCOLOR = 'dim gray'
 
@@ -42,7 +44,10 @@ class Player:
 
     #Pretty much just for debugging
     def __str__(self):
-        return "This player has ${}, {} passed spins, and {} regular spins".format(self.bank, self.passedSpins, self.spins)
+        s = "Bank: ${}\n\nSpins: {}\n".format(self.bank,self.spins + self.passedSpins, self.passedSpins)
+        if self.passedSpins:
+            s += "Must Spin"
+        return s
     
     #Pass this player's spins to another player
     def passTo(otherPlayer):
@@ -58,7 +63,7 @@ class GameGui(Frame):
         self.trivia = TriviaGame()
         self.spin = SpinGame()
 
-        self.players = [Player() for x in range(3)]
+        self.players = [Player() for x in range(NUMPLAYERS)]
 
         #keep track of the first button that was pressed, for fairness
         self.buttonPress = None
@@ -73,7 +78,7 @@ class GameGui(Frame):
 
         self.validBoxes = [(x,y) for x in range(6) for y in range(5) if (x < 1 or x > 4) or (y < 1 or y > 3)]
 
-        self.addTrivia() #TODO: Remove this once it is handled by gameTick
+        self.displayPlayers() #TODO: Remove this from initialization once it is handled by gameTick
 
         self.initGPIO()
         self.initGUI()
@@ -135,13 +140,29 @@ class GameGui(Frame):
         #Get a question from the trivia object
         self.currQuestion, self.currAnswers = self.trivia.generateQuestion()
 
-        #Parse the question data into something we can display
-        self.answerText = list(self.currAnswers.keys())
-        self.questionText = "{}\n\nA. {}\nB. {}\nC. {}".format(self.currQuestion, self.answerText[0], self.answerText[1], self.answerText[2])
-
         #Hopefully, display the question in the middle of the grid
-        self.questionDisplay = Label(self, text=self.questionText, bg= "white", font = ("Calibri", 50))
+        self.questionDisplay = Label(self, text=self.currQuestion, bg= "white", font = ("Calibri", 50))
         self.questionDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
+
+    def displayPlayers(self):
+        #When we're not in trivia, put a display with all of the players' information
+        #start by creating a frame to put all of this in
+        self.playerDisplay = Frame(self)
+
+        #define the grid for this frame
+        Grid.rowconfigure(self.playerDisplay, 0, weight=1)
+        for col in range(NUMPLAYERS):
+            Grid.columnconfigure(self.playerDisplay, col, weight=1)
+        
+        #Place a box for each player in this grid
+        self.playerLabels = []
+        for player in range(len(self.players)):
+            labelText = "Player {}:\n\n{}".format(player + 1, self.players[player])
+            self.playerLabels.append(Label(self.playerDisplay, text=labelText, bg=HIGHLIGHTCOLOR, font=("Calibri", 50), borderwidth=10, relief='solid'))
+            self.playerLabels[-1].grid(row=0, column=player,sticky=N+S+E+W)
+        #Finally, put this frame in the spot that it goes in on the Big Board
+        self.playerDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
+
 
     def startSpin(self):
         #clear the middle of the screen and shuffle the board
