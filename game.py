@@ -2,7 +2,7 @@ from trivia import Question, TriviaGame
 from spin import Box, Whammy, SpinGame
 from tkinter import *
 import random
-#bronson dumb
+
 #Useful little dummy module to use instead of always testing on an rpi
 #install with pip install Mock.GPIO
 try:
@@ -24,7 +24,10 @@ TICKRATE = 500
 #Constants for GPIO buttons
 PLAYER0 = 23
 PLAYER1 = 24
-PLAYER2 = 25
+
+ANSWERA = 18
+ANSWERB = 19
+ANSWERC = 20
 
 HIGHLIGHTCOLOR = 'yellow2'
 UNHIGHLIGHTCOLOR = 'dim gray'
@@ -57,11 +60,15 @@ class GameGui(Frame):
 
         self.players = [Player() for x in range(3)]
 
+        #keep track of the first button that was pressed, for fairness
+        self.buttonPress = None
+
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
         self.highlightedBox = None
 
         #We also have to keep track of what part of the game we are in
-        self.gameState = 1 #states: 0-trivia, 1-spinner
+        self.gameState = 0 #states: 0-waiting to start, 1-trivia, 2-spinner
+        self.waitState = 0
 
 
         self.validBoxes = [(x,y) for x in range(6) for y in range(5) if (x < 1 or x > 4) or (y < 1 or y > 3)]
@@ -73,14 +80,16 @@ class GameGui(Frame):
 
         self.shuffleBoard()
 
-
+    def detectButton(self, button):
+        if self.buttonPress == None:
+            self.buttonPress = button
     #Initializer functions
     def initGPIO(self):
         GPIO.setmode(GPIO.BCM)
-        pins = [PLAYER0, PLAYER1, PLAYER2]
+        pins = [PLAYER0, PLAYER1, ANSWERA, ANSWERB, ANSWERC]
         for button in pins:
             GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            GPIO.add_event_detect(button, GPIO.RISING, bouncetime=100)
+            GPIO.add_event_detect(button, GPIO.RISING, callback=self.detectButton, bouncetime=100)
 
     def initGUI(self):
         for row in range(5):
@@ -90,9 +99,13 @@ class GameGui(Frame):
 
     def shuffleBoard(self):
 
+        #self.boxes = self.spin.populate()
+        #Temporary for testing
+        self.boxes = []
         for x,y in self.validBoxes:
-            placeholder = Label(self, text="{}".format((x,y)), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
-            placeholder.grid(row=y, column=x, sticky = N+S+E+W)
+            self.boxes.append(Label(self, text="{}".format((x,y)), font=("Calibri", 35), bg='dim gray', borderwidth=10))
+        for index in range(len(self.boxes)):
+            self.boxes[index].grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
 
     def highlightNewBox(self):
         possibleLocations = list(filter(lambda box: box is not self.highlightedBox, self.validBoxes))
@@ -110,6 +123,10 @@ class GameGui(Frame):
         #note the newly old highlighted box (try puzzling out THAT comment)
         self.highlightedBox = newBox
 
+    def spinBoard(self, shuffle=False):
+        if shuffle:
+            self.shuffleBoard()
+        self.highlightNewBox()
 
     def addTrivia(self):
         #get a trivia question and put it in the middle of the screen
@@ -130,22 +147,23 @@ class GameGui(Frame):
         #clear the middle of the screen and shuffle the board
         pass
 
-    def gameTick(self, parent):
+    def waitTick(self, parent):
         '''
-        Tasks that must be completed every game update
+        Game Tick to loop until game starts
         '''
-        #If we are in trivia
-        if self.gameState == 0:
-            #do trivia things
-            self.addTrivia()
-        #Otherwise, we are spinning
+        if self.waitState == 2:
+            self.waitState = 0
+            self.spinBoard(shuffle=True)
         else:
-            self.highlightNewBox()
+            self.spinBoard()
         
 
         self.pack(fill=BOTH, expand=1)
-        #be like goofy and do it again
-        parent.after(TICKRATE, self.gameTick, parent)
+
+        #now queue up next tick
+        if self.gameState == 0:
+            self.waitState += 1
+            parent.after(TICKRATE, self.waitTick, parent)
         
         
 
@@ -158,7 +176,7 @@ def main():
 
     game = GameGui(window)
 
-    game.gameTick(window)
+    game.waitTick(window)
 
     window.mainloop()
 
