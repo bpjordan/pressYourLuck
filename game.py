@@ -2,6 +2,7 @@ from trivia import Question, TriviaGame
 from spin import Box, Whammy, SpinGame
 from tkinter import *
 import random
+from PIL import Image, ImageTk
 
 #Useful little dummy module to use instead of always testing on an rpi
 #install with pip install Mock.GPIO
@@ -147,18 +148,36 @@ class GameGui(Frame):
     def displayPlayers(self):
         #When we're not in trivia, put a display with all of the players' information
         #start by creating a frame to put all of this in
+
         self.playerDisplay = Frame(self)
 
         #define the grid for this frame
         Grid.rowconfigure(self.playerDisplay, 0, weight=1)
         for col in range(NUMPLAYERS):
             Grid.columnconfigure(self.playerDisplay, col, weight=1)
-        
+
+        #make the background for each player's stats
+        bkgd = ImageTk.PhotoImage(Image.open('Big Board Images/$2000.png').resize((500,500)))
+
         #Place a box for each player in this grid
         self.playerLabels = []
         for player in range(len(self.players)):
             labelText = "Player {}:\n\n{}".format(player + 1, self.players[player])
-            self.playerLabels.append(Label(self.playerDisplay, text=labelText, bg=HIGHLIGHTCOLOR, font=("Calibri", 50), borderwidth=10, relief='solid'))
+
+            #Make a canvas and put the background and text on it
+
+            # self.playerLabels.append(Canvas(self.playerDisplay, height=500, width=500))
+            # self.playerLabels[-1].create_image(200,200, image=bkgd)
+            # self.playerLabels[-1].create_text(300,300, text=labelText, font=("Calibri", 50))
+
+            # self.playerLabels.append(Label(self.playerDisplay, text=labelText, image=bkgd, compound='top', font=("Calibri", 50), borderwidth=10, relief='solid'))
+
+            self.playerLabels.append(Frame(self.playerDisplay))
+            bkgdLabel = Label(self.playerLabels[-1], image=bkgd)
+            bkgdLabel.pack(expand=True)
+            textLabel = Label(self.playerLabels[-1], text=labelText, font=("Calibri", 50))
+            textLabel.place(anchor=N, relx=0.5, rely=0.25)
+            #Put it on the grid
             self.playerLabels[-1].grid(row=0, column=player,sticky=N+S+E+W)
         #Finally, put this frame in the spot that it goes in on the Big Board
         self.playerDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
