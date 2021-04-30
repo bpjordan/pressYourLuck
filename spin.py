@@ -14,12 +14,12 @@ class Box(PhotoImage):
 # a prize box has
 # - a fn that adds its value to the players bank
 class PrizeBox(Box):
-        def __init__(self, img, value):
-            Box.__init__(img,value)
-            raise NotImplementedError
+    def __init__(self, img, value):
+        Box.__init__(img,value)
+        raise NotImplementedError
 
-        def affect(Player):
-            Player.bank += self.value
+    def affect(Player):
+        Player.bank += self.value
 
         
 # a whammy is
@@ -153,8 +153,5 @@ class SpinGame:
         j = 0
         while j < value:
             bigBoard.append(Whammy())
-            2
-
-    
 
 #PhotoImage(file="{}.png")
