@@ -187,7 +187,7 @@ class GameGui(Frame):
         #clear the middle of the screen and shuffle the board
         pass
 
-    def waitTick(self, parent):
+    def waitTick(self):
         '''
         Game Tick to loop until game starts
         '''
@@ -196,16 +196,21 @@ class GameGui(Frame):
             self.spinBoard(shuffle=True)
         else:
             self.spinBoard()
-        
 
-        self.pack(fill=BOTH, expand=1)
+        
+        
+    def eventLoop(self, parent):
+        
+        if self.gameState == 0:
+            self.waitState += 1
+            self.waitTick()
+
+        self.pack(fill=BOTH, expand=True)
 
         #now queue up next tick
         if self.gameState == 0:
             self.waitState += 1
-            parent.after(TICKRATE, self.waitTick, parent)
-        
-        
+            parent.after(TICKRATE, self.eventLoop, parent)
 
     
 
@@ -216,7 +221,7 @@ def main():
 
     game = GameGui(window)
 
-    game.waitTick(window)
+    game.eventLoop(window)
 
     window.mainloop()
 
