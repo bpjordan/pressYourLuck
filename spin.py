@@ -20,7 +20,7 @@ class PrizeBox(Box):
 
     def affect(Player):
         Player.bank += self.value
-
+        
         
 # a whammy is
 # - a box with specific conditions
@@ -38,6 +38,7 @@ class Whammy(Box):
     def affect(Player):
         Player.bank = 0
         Player.whammies += 1
+        
 
 class SpinGame:
 
@@ -153,5 +154,6 @@ class SpinGame:
         j = 0
         while j < value:
             bigBoard.append(Whammy())
+            j += 1
 
 #PhotoImage(file="{}.png")
