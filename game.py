@@ -67,14 +67,14 @@ class GameGui(Frame):
         self.players = [Player() for x in range(NUMPLAYERS)]
 
         #keep track of the first button that was pressed, for fairness
-        self.buttonPress = None
+        self._buttonPress = None
 
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
         self.highlightedBox = None
 
         #We also have to keep track of what part of the game we are in
         self.gameState = 0 #states: 0-waiting to start, 1-trivia, 2-spinner
-        self.waitState = 0
+        self.subState = 0
 
 
         self.validBoxes = [(x,y) for x in range(6) for y in range(5) if (x < 1 or x > 4) or (y < 1 or y > 3)]
@@ -86,16 +86,34 @@ class GameGui(Frame):
 
         self.shuffleBoard()
 
-    def detectButton(self, button):
-        if self.buttonPress == None:
-            self.buttonPress = button
+    @property
+    def buttonPress(self):
+        val = self._buttonPress
+        self._buttonPress = None
+        return val
+
+    @buttonPress.setter
+    def buttonPress(self, value):
+        if self._buttonPress == None:
+            self._buttonPress = value
+
+    @property
+    def gameState(self):
+        self.subState += 1
+        return self._gameState
+    
+    @gameState.setter
+    def gameState(self, value):
+        self._gameState = value
+        self.subState = 0
+    
     #Initializer functions
     def initGPIO(self):
         GPIO.setmode(GPIO.BCM)
         pins = [PLAYER0, PLAYER1, ANSWERA, ANSWERB, ANSWERC]
         for button in pins:
             GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            GPIO.add_event_detect(button, GPIO.RISING, callback=self.detectButton, bouncetime=100)
+            GPIO.add_event_detect(button, GPIO.RISING, callback=self.buttonPress, bouncetime=100)
 
     def initGUI(self):
         for row in range(5):
@@ -109,7 +127,7 @@ class GameGui(Frame):
         #Temporary for testing
         self.boxes = []
         for x,y in self.validBoxes:
-            self.boxes.append(Label(self, text="{}".format((x,y)), font=("Calibri", 35), bg='dim gray', borderwidth=10))
+            self.boxes.append(Label(self, text="{}\n{}".format((x,y), random.randint(0,10)), font=("Calibri", 35), bg='dim gray', borderwidth=10))
         for index in range(len(self.boxes)):
             self.boxes[index].grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
 
@@ -191,11 +209,14 @@ class GameGui(Frame):
         '''
         Game Tick to loop until game starts
         '''
-        if self.waitState == 2:
-            self.waitState = 0
+        if self.subState == 4:
+            self.subState = 1
             self.spinBoard(shuffle=True)
         else:
             self.spinBoard()
+
+        if self.buttonPress is not None:
+            self.gameState += 1
 
     def startQuestion(self):
         self.addTrivia()
@@ -205,8 +226,14 @@ class GameGui(Frame):
         Event loop which determines where we are in the game, and processes the next tick accordingly
         '''
         if self.gameState == 0:
-            self.waitState += 1
-            self.waitTick()
+            if self.subState == 1:
+                self.displayPlayers()
+                self.waitTick()
+            else:
+                self.waitTick()
+        elif self.gameState == 1:
+            if self.subState == 1:
+                self.startQuestion()
 
         self.pack(fill=BOTH, expand=True)
 
@@ -218,7 +245,7 @@ class GameGui(Frame):
 def main():
     #start with the witchcraft that initializes the GUI
     window = Tk()
-    window.attributes("-fullscreen", True)
+    # window.attributes("-fullscreen", True)
 
     game = GameGui(window)
 

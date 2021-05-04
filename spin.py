@@ -3,9 +3,11 @@ from random import *
 
 class Box(PhotoImage):
     def __init__(self, img:str, value:int):
-            PhotoImage.__init__(file=img, bg='dim gray', borderwidth=10)
-            self.value = value
+        PhotoImage.__init__(file=img)
+        self.value = value
     
+    def affect(self, player):
+        player.bank += self.value
 
 # a prize box is
 # - an int value
@@ -18,8 +20,8 @@ class PrizeBox(Box):
         Box.__init__(img,value)
         raise NotImplementedError
 
-    def affect(Player):
-        Player.bank += self.value
+    def affect(self, player):
+        player.bank += self.value
 
         
 # a whammy is

@@ -11,17 +11,6 @@ class TriviaGame:
 						#3-waiting for 3rd response, 4-revealing answer
         self.stateTime = 0 #keep track of the amount of time we've been in this state
 
-	#function to cycle through states
-    def nextState(self, forceState:int = None):
-        if forceState is not None:
-            self.state = forceState
-        elif self.state >=4:
-            self.state = 0
-        else:
-            self.state += 1
-        
-        self.stateTime = 0
-
     def generateQuestion(self):
         x = randint(0,len(questions)-1)
         currentQuestion = questions[x]
