@@ -197,10 +197,13 @@ class GameGui(Frame):
         else:
             self.spinBoard()
 
-        
+    def startQuestion(self):
+        self.addTrivia()
         
     def eventLoop(self, parent):
-        
+        '''
+        Event loop which determines where we are in the game, and processes the next tick accordingly
+        '''
         if self.gameState == 0:
             self.waitState += 1
             self.waitTick()
@@ -208,9 +211,7 @@ class GameGui(Frame):
         self.pack(fill=BOTH, expand=True)
 
         #now queue up next tick
-        if self.gameState == 0:
-            self.waitState += 1
-            parent.after(TICKRATE, self.eventLoop, parent)
+        parent.after(TICKRATE, self.eventLoop, parent)
 
     
 
