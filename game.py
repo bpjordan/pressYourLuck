@@ -3,21 +3,16 @@ from spin import Box, Whammy, SpinGame
 from tkinter import *
 import random
 from PIL import Image, ImageTk
+from gpiozero import Button, LED
+import gpiozero, gpiozero.pins.mock
 
-#Useful little dummy module to use instead of always testing on an rpi
-#install with pip install Mock.GPIO
-try:
-    import RPi.GPIO as GPIO
-except (RuntimeError, ModuleNotFoundError):
-    print("GPIO not connected. Defaulting to mock GPIO library")
-    import Mock.GPIO as GPIO
-
-    #Redefine this function with the right parameters so it doesn't break everything
-    def add_event_detect(channel,edge,callback = None,bouncetime = None):
-        pass
-    
-    #Make this function replace the one in the GPIO library
-    GPIO.add_event_detect = add_event_detect
+# try:
+#     gpiozero.pi_info()
+# except gpiozero.exc.BadPinFactory:
+#     print("GPIO not connected. Defaulting to mock GPIO library")
+#     from gpiozero.pins.mock import MockFactory
+#     Button.pin_factory = MockFactory()
+#     LED.pin_factory = MockFactory()
 
 #Delay in ms between game updates
 TICKRATE = 500
@@ -109,11 +104,16 @@ class GameGui(Frame):
     
     #Initializer functions
     def initGPIO(self):
-        GPIO.setmode(GPIO.BCM)
-        pins = [PLAYER0, PLAYER1, ANSWERA, ANSWERB, ANSWERC]
-        for button in pins:
-            GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            GPIO.add_event_detect(button, GPIO.RISING, callback=self.buttonPress, bouncetime=100)
+        playerPins = [PLAYER0, PLAYER1]
+        playerButtons = []
+        for i in range(len(playerPins)):
+            try:
+                playerButtons.append(Button(playerPins[i]))
+            except gpiozero.exc.BadPinFactory:
+                playerButtons.append(Button(playerPins[i], pin_factory=gpiozero.pins.mock.MockFactory()))
+                print("Pin {} not found, defaulting to mock pin factory".format(i))
+
+            playerButtons[-1].when_pressed = lambda: self.buttonPress(i)
 
     def initGUI(self):
         for row in range(5):
@@ -253,11 +253,5 @@ def main():
 
     window.mainloop()
 
-    GPIO.cleanup()
-
 if __name__ == '__main__':
-    try:
-        main()
-    except:
-        GPIO.cleanup()
-        raise
+    main()
