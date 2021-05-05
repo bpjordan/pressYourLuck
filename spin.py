@@ -42,7 +42,7 @@ class Whammy(Box):
 
 class SpinGame:
 
-    def __init__():
+    def __init__(self):
         self.numBoxes = 18
         self.numWhammies = 4
 
@@ -159,12 +159,5 @@ class SpinGame:
         
         random.shuffle(bigBoard)
         return bigBoard
-                
-                
-    def addWhammies(bigBoard,value):
-        j = 0
-        while j < value:
-            bigBoard.append(Whammy())
-            j += 1
 
 #PhotoImage(file="{}.png")
