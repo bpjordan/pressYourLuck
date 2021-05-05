@@ -149,11 +149,11 @@ class SpinGame:
         self.cost.append(900)
 
     def populate(self):
-        values = random.sample(range(self.numBoxes - self.numWhammies))
+        values = random.sample(len(self.prizes), self.numBoxes-self.numWhammies)
         bigBoard = []
-        for i in range(18):
+        for i in range(self.numBoxes):
             if i < self.numBoxes - self.numWhammies:
-                bigBoard.append(Box(self.prizes[values[i]], self.cost[values[i]]))
+                bigBoard.append(Box("Big Board Images/" + self.prizes[values[i]], self.cost[values[i]]))
             else:
                 bigBoard.append(Whammy())
         
