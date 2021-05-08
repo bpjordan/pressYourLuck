@@ -63,6 +63,7 @@ class GameGui(Frame):
 
         #keep track of the first button that was pressed, for fairness
         self._buttonPress = None
+        self.answeringPlayer = None
 
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
         self.highlightedBox = None
@@ -94,7 +95,6 @@ class GameGui(Frame):
 
     @property
     def gameState(self):
-        self.subState += 1
         return self._gameState
     
     @gameState.setter
@@ -157,7 +157,7 @@ class GameGui(Frame):
         #TODO: Make this a lot prettier
 
         #Get a question from the trivia object
-        self.currQuestion, self.currAnswers = self.trivia.generateQuestion()
+        self.currQuestion, self.correctAnswer = self.trivia.generateQuestion()
 
         #Hopefully, display the question in the middle of the grid
         self.questionDisplay = Label(self, text=self.currQuestion, bg= "white", font = ("Calibri", 50))
@@ -209,7 +209,7 @@ class GameGui(Frame):
         '''
         Game Tick to loop until game starts
         '''
-        if self.subState == 4:
+        if self.subState == 3:
             self.subState = 1
             self.spinBoard(shuffle=True)
         else:
@@ -225,15 +225,39 @@ class GameGui(Frame):
         '''
         Event loop which determines where we are in the game, and processes the next tick accordingly
         '''
-        if self.gameState == 0:
-            if self.subState == 1:
+        currState = self.gameState
+
+        if currState == 0:          #Waiting to start
+            if self.subState == 0:
                 self.displayPlayers()
                 self.waitTick()
             else:
                 self.waitTick()
-        elif self.gameState == 1:
-            if self.subState == 1:
+
+        elif currState == 1:        #Trivia
+            if self.subState == 0:
                 self.startQuestion()
+            elif self.subState == 1:
+                self.awaitButton()
+            elif self.subState == 2:
+                self.awaitAnswer(firstPlayer = True)
+            elif self.subState == 3:
+                self.awaitAnswer()
+            elif self.subState == 4:
+                self.displayAnswer()
+
+        elif currState == 2:        #spin
+            if self.subState == 0:
+                self.startSpin()
+            elif self.subState == 1:
+                self.awaitButton()
+                self.waitTick()
+            elif self.subState == 2:
+                self.landOnBox()
+
+        elif currState == 3:
+            self.displayWinner()
+            
 
         self.pack(fill=BOTH, expand=True)
 
