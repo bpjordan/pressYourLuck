@@ -62,7 +62,8 @@ class GameGui(Frame):
         self.players = [Player() for x in range(NUMPLAYERS)]
 
         #keep track of the first button that was pressed, for fairness
-        self._buttonPress = None
+        self.handleButton = False
+        self.buttonPress = None
         self.answeringPlayer = None
 
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
@@ -86,12 +87,14 @@ class GameGui(Frame):
     def buttonPress(self):
         val = self._buttonPress
         self._buttonPress = None
+        self.handleButton = False
         return val
 
     @buttonPress.setter
     def buttonPress(self, value):
-        if self._buttonPress == None:
+        if self.handleButton == False:
             self._buttonPress = value
+            self.handleButton = True
 
     @property
     def gameState(self):
@@ -201,9 +204,10 @@ class GameGui(Frame):
         self.playerDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
 
 
-    def startSpin(self):
-        #clear the middle of the screen and shuffle the board
-        pass
+    #########################
+    #       GAME LOGIC      #
+    #########################
+
 
     def waitTick(self):
         '''
@@ -215,15 +219,43 @@ class GameGui(Frame):
         else:
             self.spinBoard()
 
-        if self.buttonPress is not None:
-            self.gameState += 1
+    def awaitButton(self):
+        if self.handleButton:
+            self.subState += 1
+
+    #####################
+    #   Trivia Funcs    #
+    #####################
 
     def startQuestion(self):
         self.addTrivia()
-        
+
+    def awaitAnswer(firstPlayer = False):
+        pass
+
+    def displayAnswers(self):
+        pass
+
+    #####################
+    #   Spinning Funcs  #
+    #####################
+
+    def startSpin(self):
+        #clear the middle of the screen and shuffle the board
+        pass
+
+    def landOnBox(self):
+        pass
+
+    #####################
+    #   Logic Handler   #
+    #####################
+
     def eventLoop(self, parent):
         '''
         Event loop which determines where we are in the game, and processes the next tick accordingly
+
+        God do I miss switch statements
         '''
         currState = self.gameState
 
@@ -233,6 +265,9 @@ class GameGui(Frame):
                 self.waitTick()
             else:
                 self.waitTick()
+                if self.handleButton:
+                    self.buttonPress
+                    self.gameState += 1
 
         elif currState == 1:        #Trivia
             if self.subState == 0:
