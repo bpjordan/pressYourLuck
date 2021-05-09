@@ -131,27 +131,35 @@ class GameGui(Frame):
 
         #self.boxes = self.spin.populate()
         #Temporary for testing
-        self.boxes = []
-        for x,y in self.validBoxes:
-            self.boxes.append(Label(self, text="{}\n{}".format((x,y), random.randint(0,10)), font=("Calibri", 35), bg='dim gray', borderwidth=10))
+        self.boxes = self.spin.populate()
         for index in range(len(self.boxes)):
-            self.boxes[index].grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
+            f = Frame(self, bg = UNHIGHLIGHTCOLOR)
+            img = Label(f, image = self.boxes[index])
+            img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
+            f.grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
 
     def highlightNewBox(self):
-        possibleLocations = list(filter(lambda box: box is not self.highlightedBox, self.validBoxes))
-        newBox = random.choice(possibleLocations)
+        possibleLocations = list(filter(lambda box: box is not self.highlightedBox, range(len(self.boxes))))
 
         #Unhighlight the old box
         if self.highlightedBox is not None:
-            placeholder = Label(self, text="{}".format(self.highlightedBox), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
-            placeholder.grid(column=self.highlightedBox[0], row=self.highlightedBox[1], sticky=N+S+E+W)
+            f = Frame(self,bg = UNHIGHLIGHTCOLOR)
+            img = Label(f, image=self.boxes[index])
+            img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
+            f.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
 
+            # placeholder = Label(self, text="{}".format(self.highlightedBox), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
+            # placeholder.grid(column=self.highlightedBox[0], row=self.highlightedBox[1], sticky=N+S+E+W)
+
+        self.highlightedBox = random.choice(possibleLocations)
         #highlight the new box
-        placeholder = Label(self, text="{}".format(newBox), font=("Calibri", 35), bg=HIGHLIGHTCOLOR, borderwidth=10, relief='solid')
-        placeholder.grid(column=newBox[0], row=newBox[1], sticky=N+S+E+W)
+        f = Frame(self,bg = HIGHLIGHTCOLOR)
+        img = Label(f, image=self.boxes[index])
+        img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
+        f.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
 
-        #note the newly old highlighted box (try puzzling out THAT comment)
-        self.highlightedBox = newBox
+        # placeholder = Label(self, text="{}".format(newBox), font=("Calibri", 35), bg=HIGHLIGHTCOLOR, borderwidth=10, relief='solid')
+        # placeholder.grid(column=newBox[0], row=newBox[1], sticky=N+S+E+W)
 
     def spinBoard(self, shuffle=False):
         if shuffle:
