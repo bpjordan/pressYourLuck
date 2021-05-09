@@ -15,7 +15,7 @@ import gpiozero, gpiozero.pins.mock
 #     LED.pin_factory = MockFactory()
 
 #Delay in ms between game updates
-TICKRATE = 500
+TICKRATE = 1000
 
 #Constants for GPIO buttons
 PLAYERBUTTONS = [23,24]
@@ -133,30 +133,24 @@ class GameGui(Frame):
         #Temporary for testing
         self.boxes = self.spin.populate()
         for index in range(len(self.boxes)):
-            f = Frame(self, bg = UNHIGHLIGHTCOLOR)
-            img = Label(f, image = self.boxes[index])
-            img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
-            f.grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
+            img = Label(self, image = self.boxes[index], bg = UNHIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
+            img.grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
 
     def highlightNewBox(self):
         possibleLocations = list(filter(lambda box: box is not self.highlightedBox, range(len(self.boxes))))
 
         #Unhighlight the old box
         if self.highlightedBox is not None:
-            f = Frame(self,bg = UNHIGHLIGHTCOLOR)
-            img = Label(f, image=self.boxes[index])
-            img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
-            f.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
+            img = Label(self, image=self.boxes[self.highlightedBox], bg=UNHIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
+            img.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
 
             # placeholder = Label(self, text="{}".format(self.highlightedBox), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
             # placeholder.grid(column=self.highlightedBox[0], row=self.highlightedBox[1], sticky=N+S+E+W)
 
         self.highlightedBox = random.choice(possibleLocations)
         #highlight the new box
-        f = Frame(self,bg = HIGHLIGHTCOLOR)
-        img = Label(f, image=self.boxes[self.highlightedBox])
-        img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
-        f.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
+        img = Label(self, image=self.boxes[self.highlightedBox], bg = HIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
+        img.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
 
         # placeholder = Label(self, text="{}".format(newBox), font=("Calibri", 35), bg=HIGHLIGHTCOLOR, borderwidth=10, relief='solid')
         # placeholder.grid(column=newBox[0], row=newBox[1], sticky=N+S+E+W)
@@ -205,10 +199,10 @@ class GameGui(Frame):
             # self.playerLabels.append(Label(self.playerDisplay, text=labelText, image=bkgd, compound='top', font=("Calibri", 50), borderwidth=10, relief='solid'))
 
             self.playerLabels.append(Frame(self.playerDisplay))
-            bkgdLabel = Label(self.playerLabels[-1], image=bkgd)
-            bkgdLabel.pack(expand=True)
-            textLabel = Label(self.playerLabels[-1], text=labelText, font=("Calibri", 50))
-            textLabel.place(anchor=N, relx=0.5, rely=0.25)
+            # bkgdLabel = Label(self.playerLabels[-1], image=bkgd)
+            # bkgdLabel.pack(expand=True)
+            textLabel = Label(self.playerLabels[-1], text=labelText, font=("Calibri", 50), bg = "Orange", borderwidth = 5, relief = SOLID)
+            textLabel.pack(fill=BOTH, expand=True)
             #Put it on the grid
             self.playerLabels[-1].grid(row=0, column=player,sticky=N+S+E+W)
         #Finally, put this frame in the spot that it goes in on the Big Board
@@ -333,7 +327,7 @@ class GameGui(Frame):
 def main():
     #start with the witchcraft that initializes the GUI
     window = Tk()
-    # window.attributes("-fullscreen", True)
+    window.attributes("-fullscreen", True)
 
     game = GameGui(window)
 
