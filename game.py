@@ -280,11 +280,14 @@ class GameGui(Frame):
             if self.subState == 0:
                 self.displayPlayers()
                 self.waitTick()
+                self.subState += 1
             else:
                 self.waitTick()
                 if self.handleButton:
                     self.buttonPress
                     self.gameState += 1
+                else:
+                    self.subState += 1
 
         elif currState == 1:        #Trivia
             if self.subState == 0:
