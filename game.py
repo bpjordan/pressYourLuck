@@ -154,7 +154,7 @@ class GameGui(Frame):
         self.highlightedBox = random.choice(possibleLocations)
         #highlight the new box
         f = Frame(self,bg = HIGHLIGHTCOLOR)
-        img = Label(f, image=self.boxes[index])
+        img = Label(f, image=self.boxes[self.highlightedBox])
         img.pack(ipadx=2, ipady=2, fill=BOTH, expand=True)
         f.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
 

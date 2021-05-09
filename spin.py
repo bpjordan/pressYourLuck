@@ -1,9 +1,9 @@
 from tkinter import *
-from random import *
+import random
 
 class Box(PhotoImage):
     def __init__(self, img:str, value:int):
-        PhotoImage.__init__(file=img)
+        PhotoImage.__init__(self, file=img)
         self.value = value
     
     def affect(self, player):
@@ -17,7 +17,7 @@ class Box(PhotoImage):
 # - a fn that adds its value to the players bank
 class PrizeBox(Box):
     def __init__(self, img, value):
-        Box.__init__(img,value)
+        Box.__init__(self, img,value)
         raise NotImplementedError
 
     def affect(self, player):
@@ -33,11 +33,11 @@ class PrizeBox(Box):
 # - maybe a function that clears a players bank and adds a whammy to their whammy count
 class Whammy(Box):
     def __init__(self):
-        Box.__init__(img, 0)
-        #img = "Whammy{}.png".format(randint(1,10))
-        self.img = "Whammy"
+        img = "Whammies/Whammy{}.png".format(random.randint(1,10))
+        Box.__init__(self, img, 0)
+        # self.img = "Whammy"
 
-    def affect(Player):
+    def affect(self, player):
         Player.bank = 0
         Player.whammies += 1
 
@@ -71,8 +71,8 @@ class SpinGame:
         self.prizes.append("Boston")
         self.prizes.append("Bracelet")
         self.prizes.append("Brassbed")
-        self.prizes.append("Brasil")
-        self.prizes.append("Britian")
+        self.prizes.append("Brazil")
+        self.prizes.append("Britain")
         self.prizes.append("Calgary")
         self.prizes.append("Canadianrockies")
         self.prizes.append("Cancun")
@@ -146,12 +146,15 @@ class SpinGame:
         self.cost.append(150)
         self.cost.append(900)
 
+        self.numBoxes = 18
+        self.numWhammies = 3
+
     def populate(self):
-        values = random.sample(len(self.prizes), self.numBoxes-self.numWhammies)
+        values = random.sample(range(len(self.prizes)), self.numBoxes-self.numWhammies)
         bigBoard = []
         for i in range(self.numBoxes):
             if i < self.numBoxes - self.numWhammies:
-                bigBoard.append(Box("Big Board Images/" + self.prizes[values[i]], self.cost[values[i]]))
+                bigBoard.append(Box("Big Board Images/" + self.prizes[values[i]] + ".png", self.cost[values[i]]))
             else:
                 bigBoard.append(Whammy())
         
