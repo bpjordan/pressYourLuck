@@ -73,7 +73,8 @@ class GameGui(Frame):
 
         #keep track of the states of all sets of buttons
         self.handleButton = False
-        self.buttonPress = None
+        self._buttonPress = None
+        self.handleButton = False
         self.answeringPlayer = None
         self.triviaAnswer = None
 
@@ -101,8 +102,7 @@ class GameGui(Frame):
         self.handleButton = False
         return val
 
-    @buttonPress.setter
-    def buttonPress(self, value):
+    def checkButtonPress(self, value):
         if self.handleButton == False:
             self._buttonPress = value
             self.handleButton = True
@@ -119,7 +119,7 @@ class GameGui(Frame):
     #Initializer functions
     def initGPIO(self):
         for player in range(len(self.players)):
-            self.players[player].button.when_activated = lambda: self.buttonPress(player)
+            self.players[player].button.when_pressed = lambda: self.checkButtonPress(player)
 
     def initGUI(self):
         for row in range(5):
@@ -232,8 +232,9 @@ class GameGui(Frame):
 
     def startQuestion(self):
         self.addTrivia()
+        self.subState += 1
 
-    def awaitAnswer(firstPlayer = False):
+    def awaitAnswer(self, firstPlayer = False):
         if self.triviaAnswer is None:
             return
 
@@ -295,7 +296,7 @@ class GameGui(Frame):
             elif self.subState == 1:
                 self.awaitButton()
             elif self.subState == 2:
-                self.awaitAnswer(firstPlayer = True)
+                self.awaitAnswer(True)
             elif self.subState == 3:
                 self.awaitAnswer()
             elif self.subState == 4:
@@ -324,7 +325,7 @@ class GameGui(Frame):
 def main():
     #start with the witchcraft that initializes the GUI
     window = Tk()
-    window.attributes("-fullscreen", True)
+    # window.attributes("-fullscreen", True)
 
     game = GameGui(window)
 
