@@ -18,12 +18,10 @@ import gpiozero, gpiozero.pins.mock
 TICKRATE = 500
 
 #Constants for GPIO buttons
-PLAYER0 = 23
-PLAYER1 = 24
+PLAYERBUTTONS = [23,24]
+PLAYERLEDS = [17, 13]
 
-ANSWERA = 18
-ANSWERB = 19
-ANSWERC = 20
+TRIVIABUTTONS = [18,19,20]
 
 NUMPLAYERS = 2
 
@@ -33,10 +31,22 @@ UNHIGHLIGHTCOLOR = 'dim gray'
 
 #Player Class, pretty self explanatory
 class Player:
-    def __init__(self):
+    def __init__(self, button, led):
         self.bank = 0
         self.passedSpins = 0
         self.spins = 0
+
+        try:
+            self.button = Button(button)
+        except gpiozero.exc.BadPinFactory:
+            self.button = Button(button, pin_factory=gpiozero.pins.mock.MockFactory())
+            print("Pin {} not found, defaulting to mock pin factory".format(button))
+        
+        try:
+            self.led = LED(led)
+        except gpiozero.exc.BadPinFactory:
+            self.led = LED(led, pin_factory=gpiozero.pins.mock.MockFactory())
+            print("Pin {} not found, defaulting to mock pin factory".format(button))
 
     #Pretty much just for debugging
     def __str__(self):
@@ -59,12 +69,13 @@ class GameGui(Frame):
         self.trivia = TriviaGame()
         self.spin = SpinGame()
 
-        self.players = [Player() for x in range(NUMPLAYERS)]
+        self.players = [Player(button = PLAYERBUTTONS[x], led = PLAYERLEDS[x]) for x in range(NUMPLAYERS)]
 
-        #keep track of the first button that was pressed, for fairness
+        #keep track of the states of all sets of buttons
         self.handleButton = False
         self.buttonPress = None
         self.answeringPlayer = None
+        self.triviaAnswer = None
 
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
         self.highlightedBox = None
@@ -107,16 +118,8 @@ class GameGui(Frame):
     
     #Initializer functions
     def initGPIO(self):
-        playerPins = [PLAYER0, PLAYER1]
-        playerButtons = []
-        for i in range(len(playerPins)):
-            try:
-                playerButtons.append(Button(playerPins[i]))
-            except gpiozero.exc.BadPinFactory:
-                playerButtons.append(Button(playerPins[i], pin_factory=gpiozero.pins.mock.MockFactory()))
-                print("Pin {} not found, defaulting to mock pin factory".format(i))
-
-            playerButtons[-1].when_pressed = lambda: self.buttonPress(i)
+        for player in range(len(self.players)):
+            self.players[player].button.when_activated = lambda: self.buttonPress(player)
 
     def initGUI(self):
         for row in range(5):
@@ -231,7 +234,21 @@ class GameGui(Frame):
         self.addTrivia()
 
     def awaitAnswer(firstPlayer = False):
-        pass
+        if self.triviaAnswer is None:
+            return
+
+        if self.triviaAnswer == self.correctAnswer:
+            if firstPlayer:
+                self.players[self.answeringPlayer].bank += 300
+            else:
+                self.players[self.answeringPlayer].bank += 100
+
+        if self.answeringPlayer == len(self.players) - 1:
+            self.answeringPlayer = 0
+        else:
+            self.answeringPlayer += 1
+
+        self.subState += 1
 
     def displayAnswers(self):
         pass
@@ -304,7 +321,7 @@ class GameGui(Frame):
 def main():
     #start with the witchcraft that initializes the GUI
     window = Tk()
-    # window.attributes("-fullscreen", True)
+    window.attributes("-fullscreen", True)
 
     game = GameGui(window)
 
