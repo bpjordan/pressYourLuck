@@ -2,9 +2,9 @@ from trivia import Question, TriviaGame
 from spin import Box, Whammy, SpinGame
 from tkinter import *
 import random
-from PIL import Image, ImageTk
 from gpiozero import Button, LED
 import gpiozero, gpiozero.pins.mock
+from time import sleep
 
 # try:
 #     gpiozero.pi_info()
@@ -73,9 +73,13 @@ class GameGui(Frame):
 
         #keep track of the states of all sets of buttons
         self.handleButton = False
-        self.buttonPress = None
+        self._buttonPress = None
+        self.handleButton = False
         self.answeringPlayer = None
         self.triviaAnswer = None
+        self.playersAsked = 0
+        self.spinningPlayer = 0
+        self.playersSpun = 0
 
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
         self.highlightedBox = None
@@ -101,8 +105,7 @@ class GameGui(Frame):
         self.handleButton = False
         return val
 
-    @buttonPress.setter
-    def buttonPress(self, value):
+    def pressButton(self, value):
         if self.handleButton == False:
             self._buttonPress = value
             self.handleButton = True
@@ -119,7 +122,7 @@ class GameGui(Frame):
     #Initializer functions
     def initGPIO(self):
         for player in range(len(self.players)):
-            self.players[player].button.when_activated = lambda: self.buttonPress(player)
+            self.players[player].button.when_pressed = lambda: self.pressButton(player)
 
     def initGUI(self):
         for row in range(5):
@@ -129,34 +132,34 @@ class GameGui(Frame):
 
     def shuffleBoard(self):
 
-        #self.boxes = self.spin.populate()
-        #Temporary for testing
-        self.boxes = []
-        for x,y in self.validBoxes:
-            self.boxes.append(Label(self, text="{}\n{}".format((x,y), random.randint(0,10)), font=("Calibri", 35), bg='dim gray', borderwidth=10))
+        self.boxes = self.spin.populate()
         for index in range(len(self.boxes)):
-            self.boxes[index].grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
+            img = Label(self, image = self.boxes[index], bg = UNHIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
+            img.grid(column=self.validBoxes[index][0], row=self.validBoxes[index][1], sticky=N+S+E+W)
+    
+    def highlightBox(self, box):
+        img = Label(self, image=self.boxes[box], bg = HIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
+        img.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
+        self.highlightedBox = box
 
-    def highlightNewBox(self):
-        possibleLocations = list(filter(lambda box: box is not self.highlightedBox, self.validBoxes))
-        newBox = random.choice(possibleLocations)
+    def unHighlightBox(self, highlightNewBox = True):
 
         #Unhighlight the old box
         if self.highlightedBox is not None:
-            placeholder = Label(self, text="{}".format(self.highlightedBox), font=("Calibri", 35), bg=UNHIGHLIGHTCOLOR, borderwidth=10)
-            placeholder.grid(column=self.highlightedBox[0], row=self.highlightedBox[1], sticky=N+S+E+W)
+            img = Label(self, image=self.boxes[self.highlightedBox], bg=UNHIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
+            img.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
 
-        #highlight the new box
-        placeholder = Label(self, text="{}".format(newBox), font=("Calibri", 35), bg=HIGHLIGHTCOLOR, borderwidth=10, relief='solid')
-        placeholder.grid(column=newBox[0], row=newBox[1], sticky=N+S+E+W)
-
-        #note the newly old highlighted box (try puzzling out THAT comment)
-        self.highlightedBox = newBox
+        if highlightNewBox:
+            #highlight the new box
+            possibleLocations = list(filter(lambda box: box is not self.highlightedBox, range(len(self.boxes))))
+            self.highlightBox(random.choice(possibleLocations))
+        else:
+            self.highlightedBox = None
 
     def spinBoard(self, shuffle=False):
         if shuffle:
             self.shuffleBoard()
-        self.highlightNewBox()
+        self.unHighlightBox()
 
     def addTrivia(self):
         #get a trivia question and put it in the middle of the screen
@@ -169,7 +172,7 @@ class GameGui(Frame):
         self.questionDisplay = Label(self, text=self.currQuestion, bg= "white", font = ("Calibri", 50))
         self.questionDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
 
-    def displayPlayers(self):
+    def displayPlayers(self, **kwargs):
         #When we're not in trivia, put a display with all of the players' information
         #start by creating a frame to put all of this in
 
@@ -180,27 +183,21 @@ class GameGui(Frame):
         for col in range(NUMPLAYERS):
             Grid.columnconfigure(self.playerDisplay, col, weight=1)
 
-        #make the background for each player's stats
-        bkgd = ImageTk.PhotoImage(Image.open('Big Board Images/$2000.png').resize((500,500)))
-
         #Place a box for each player in this grid
         self.playerLabels = []
         for player in range(len(self.players)):
             labelText = "Player {}:\n\n{}".format(player + 1, self.players[player])
 
-            #Make a canvas and put the background and text on it
+            #append text to this label if we have anything to add in kwargs
+            if player in kwargs.keys():
+                labeltext += "\n\n" + kwargs[player]
 
-            # self.playerLabels.append(Canvas(self.playerDisplay, height=500, width=500))
-            # self.playerLabels[-1].create_image(200,200, image=bkgd)
-            # self.playerLabels[-1].create_text(300,300, text=labelText, font=("Calibri", 50))
-
-            # self.playerLabels.append(Label(self.playerDisplay, text=labelText, image=bkgd, compound='top', font=("Calibri", 50), borderwidth=10, relief='solid'))
-
+            
             self.playerLabels.append(Frame(self.playerDisplay))
-            bkgdLabel = Label(self.playerLabels[-1], image=bkgd)
-            bkgdLabel.pack(expand=True)
-            textLabel = Label(self.playerLabels[-1], text=labelText, font=("Calibri", 50))
-            textLabel.place(anchor=N, relx=0.5, rely=0.25)
+            # bkgdLabel = Label(self.playerLabels[-1], image=bkgd)
+            # bkgdLabel.pack(expand=True)
+            textLabel = Label(self.playerLabels[-1], text=labelText, font=("Calibri", 50), bg = "Orange", borderwidth = 5, relief = SOLID)
+            textLabel.pack(fill=BOTH, expand=True)
             #Put it on the grid
             self.playerLabels[-1].grid(row=0, column=player,sticky=N+S+E+W)
         #Finally, put this frame in the spot that it goes in on the Big Board
@@ -216,7 +213,7 @@ class GameGui(Frame):
         '''
         Game Tick to loop until game starts
         '''
-        if self.subState == 3:
+        if self.subState == 4:
             self.subState = 1
             self.spinBoard(shuffle=True)
         else:
@@ -226,14 +223,16 @@ class GameGui(Frame):
         if self.handleButton:
             self.subState += 1
 
+
     #####################
     #   Trivia Funcs    #
     #####################
 
     def startQuestion(self):
         self.addTrivia()
+        self.subState += 1
 
-    def awaitAnswer(firstPlayer = False):
+    def awaitAnswer(self, firstPlayer = False):
         if self.triviaAnswer is None:
             return
 
@@ -259,10 +258,27 @@ class GameGui(Frame):
 
     def startSpin(self):
         #clear the middle of the screen and shuffle the board
+        statusText = {self.spinningPlayer: "Press your button to spin"}
+        if players[self.spinningPlayer].passedSpins == 0:
+            statusText[self.spinningPlayer] += "\nOr hit any of the trivia buttons to pass"
+        self.displayPlayers(**statusText)
+        self.shuffleBoard()
+
+    def awaitSpin(self):
         pass
 
     def landOnBox(self):
-        pass
+        box = self.highlightedBox
+        for i in range(3):
+            self.unHighlightBox(False)
+            self.pack(fill=BOTH, expand=True)
+            sleep(0.25)
+            self.highlightBox(box)
+            self.pack(fill=BOTH, expand=True)
+            sleep(0.25)
+
+            
+        self.boxes[self.highlightedBox].affect(self.spinningPlayer)
 
     #####################
     #   Logic Handler   #
@@ -295,7 +311,7 @@ class GameGui(Frame):
             elif self.subState == 1:
                 self.awaitButton()
             elif self.subState == 2:
-                self.awaitAnswer(firstPlayer = True)
+                self.awaitAnswer(True)
             elif self.subState == 3:
                 self.awaitAnswer()
             elif self.subState == 4:
@@ -305,9 +321,9 @@ class GameGui(Frame):
             if self.subState == 0:
                 self.startSpin()
             elif self.subState == 1:
-                self.awaitButton()
+                self.awaitSpin()
                 self.waitTick()
-            elif self.subState == 2:
+            elif self.subState == 5:
                 self.landOnBox()
 
         elif currState == 3:
