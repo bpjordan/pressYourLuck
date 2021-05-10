@@ -18,15 +18,18 @@ from time import sleep
 TICKRATE = 500
 
 #Constants for GPIO buttons
-PLAYERBUTTONS = [23,24]
-PLAYERLEDS = [17, 13]
+PLAYERBUTTONS = [22,23]
+PLAYERLEDS = [21,24]
 
-TRIVIABUTTONS = [18,19,20]
+TRIVIABUTTONS = [25,26,27]
 
 NUMPLAYERS = 2
 
 HIGHLIGHTCOLOR = 'yellow2'
 UNHIGHLIGHTCOLOR = 'dim gray'
+
+QUESTIONSPERROUND = 4
+NUMROUNDS = 2
 
 
 #Player Class, pretty self explanatory
@@ -50,10 +53,7 @@ class Player:
 
     #Pretty much just for debugging
     def __str__(self):
-        s = "Bank: ${}\n\nSpins: {}\n".format(self.bank,self.spins + self.passedSpins, self.passedSpins)
-        if self.passedSpins:
-            s += "Must Spin"
-        return s
+        return "Bank: ${}\n\nSpins: {}\n".format(self.bank,self.spins + self.passedSpins, self.passedSpins)
     
     #Pass this player's spins to another player
     def passTo(otherPlayer):
@@ -69,17 +69,17 @@ class GameGui(Frame):
         self.trivia = TriviaGame()
         self.spin = SpinGame()
 
+        #Our list of players
         self.players = [Player(button = PLAYERBUTTONS[x], led = PLAYERLEDS[x]) for x in range(NUMPLAYERS)]
 
-        #keep track of the states of all sets of buttons
+        #state tracking stuff
         self.handleButton = False
         self._buttonPress = None
         self.handleButton = False
         self.answeringPlayer = None
         self.triviaAnswer = None
-        self.playersAsked = 0
         self.spinningPlayer = 0
-        self.playersSpun = 0
+        self.roundsRemaining = NUMROUNDS
 
         #We must keep track of the highlighterd box in order to un-highlight it more easily		
         self.highlightedBox = None
@@ -110,6 +110,9 @@ class GameGui(Frame):
             self._buttonPress = value
             self.handleButton = True
 
+    def pressTrivia(self, value):
+        self.triviaAnswer = value
+
     @property
     def gameState(self):
         return self._gameState
@@ -121,8 +124,15 @@ class GameGui(Frame):
     
     #Initializer functions
     def initGPIO(self):
-        for player in range(len(self.players)):
-            self.players[player].button.when_pressed = lambda: self.pressButton(player)
+        # for currPlayer in range(len(self.players)):
+        #     self.players[currPlayer].button.when_pressed = lambda: self.pressButton(currPlayer)
+        #     self.players[currPlayer].led.on()
+        self.players[0].button.when_pressed = lambda: self.pressButton(0)
+        self.players[1].button.when_pressed = lambda: self.pressButton(1)
+
+        self.answerButtons = [Button(x) for x in TRIVIABUTTONS]
+        for index in range(len(self.answerButtons)):
+            self.answerButtons[index].when_pressed = lambda: self.pressTrivia(index)
 
     def initGUI(self):
         for row in range(5):
@@ -139,7 +149,7 @@ class GameGui(Frame):
     
     def highlightBox(self, box):
         img = Label(self, image=self.boxes[box], bg = HIGHLIGHTCOLOR, borderwidth = 5, relief = SOLID)
-        img.grid(column=self.validBoxes[self.highlightedBox][0], row=self.validBoxes[self.highlightedBox][1], sticky=N+S+E+W)
+        img.grid(column=self.validBoxes[box][0], row=self.validBoxes[box][1], sticky=N+S+E+W)
         self.highlightedBox = box
 
     def unHighlightBox(self, highlightNewBox = True):
@@ -169,7 +179,11 @@ class GameGui(Frame):
         self.currQuestion, self.correctAnswer = self.trivia.generateQuestion()
 
         #Hopefully, display the question in the middle of the grid
-        self.questionDisplay = Label(self, text=self.currQuestion, bg= "white", font = ("Calibri", 50))
+        self.questionDisplay = Label(self, text=self.currQuestion + "\n\nBuzz in with your button", bg= "white", font = ("Calibri", 50))
+        self.questionDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
+        
+    def updateTrivia(self, text=""):
+        self.questionDisplay = Label(self, text=self.currQuestion + "\n\n" + text, bg= "white", font = ("Calibri", 50))
         self.questionDisplay.grid(row = 1, column = 1, columnspan = 4, rowspan = 3, sticky=N+S+E+W)
 
     def displayPlayers(self, **kwargs):
@@ -186,11 +200,11 @@ class GameGui(Frame):
         #Place a box for each player in this grid
         self.playerLabels = []
         for player in range(len(self.players)):
-            labelText = "Player {}:\n\n{}".format(player + 1, self.players[player])
+            labelText = "Player {}:\n\n{}\n\n".format(player + 1, self.players[player])
 
             #append text to this label if we have anything to add in kwargs
-            if player in kwargs.keys():
-                labeltext += "\n\n" + kwargs[player]
+            if str(player) in kwargs.keys():
+                labelText += kwargs[str(player)]
 
             
             self.playerLabels.append(Frame(self.playerDisplay))
@@ -230,55 +244,129 @@ class GameGui(Frame):
 
     def startQuestion(self):
         self.addTrivia()
+        self.triviaAnswer = None
+        temp = self.buttonPress
+        self.playersRemaining = NUMPLAYERS
         self.subState += 1
+
+    def awaitBuzzIn(self):
+        if self.handleButton:
+            self.answeringPlayer = self.buttonPress
+            self.updateTrivia("Player {}, Enter your answer".format(self.answeringPlayer + 1))
+            self.subState += 1
+            self.triviaAnswer = None
 
     def awaitAnswer(self, firstPlayer = False):
         if self.triviaAnswer is None:
             return
 
+        self.playersRemaining -= 1
         if self.triviaAnswer == self.correctAnswer:
             if firstPlayer:
-                self.players[self.answeringPlayer].bank += 300
+                self.players[self.answeringPlayer].spins += 3
             else:
-                self.players[self.answeringPlayer].bank += 100
+                self.players[self.answeringPlayer].spins += 1
 
         if self.answeringPlayer == len(self.players) - 1:
             self.answeringPlayer = 0
         else:
             self.answeringPlayer += 1
 
-        self.subState += 1
+        if firstPlayer or self.playersRemaining == 0:
+            self.subState += 1
+            self.questionsRemaining -= 1
 
-    def displayAnswers(self):
-        pass
+        if self.playersRemaining != 0:
+            self.updateTrivia("Player {}, Enter your answer".format(self.answeringPlayer + 1))
+
+        self.triviaAnswer = None
+
+    def displayAnswer(self):
+        if self.correctAnswer == 0:
+            letter = 'A'
+        elif self.correctAnswer == 1:
+            letter = 'B'
+        else:
+            letter = 'C'
+
+        self.updateTrivia("Correct Answer: " + letter)
+
+        if self.questionsRemaining < 0:
+            self.gameState += 1
+        else:
+            self.subState = 0
+        
+        self.pack(fill=BOTH, expand=True)
+        sleep(3)
+
+
 
     #####################
     #   Spinning Funcs  #
     #####################
 
     def startSpin(self):
+        #first, check if this player can spin, or if we need to move on to another player or round
+        if self.players[self.spinningPlayer].spins + self.players[self.spinningPlayer].passedSpins == 0:
+            self.playersRemaining -= 1
+            if self.playersRemaining <= 0:
+                self.roundsRemaining -= 1
+                if self.roundsRemaining == 0:
+                    self.gameState += 1
+                else:
+                    self.gameState -= 1
+            else:
+                if self.spinningPlayer == len(self.players) - 1:
+                    self.spinningPlayer = 0
+                else:
+                    self.spinningPlayer += 1
+            return
+
         #clear the middle of the screen and shuffle the board
-        statusText = {self.spinningPlayer: "Press your button to spin"}
-        if players[self.spinningPlayer].passedSpins == 0:
-            statusText[self.spinningPlayer] += "\nOr hit any of the trivia buttons to pass"
+        statusText = {str(self.spinningPlayer): "Press your button to spin"}
+        if self.players[self.spinningPlayer].passedSpins == 0:
+            statusText[str(self.spinningPlayer)] += "\nOr hit any of the trivia buttons to pass\nyour spins to the next player"
         self.displayPlayers(**statusText)
         self.shuffleBoard()
+        self.subState += 1
 
     def awaitSpin(self):
-        pass
+        if self.handleButton:
+            if self.buttonPress == self.spinningPlayer:
+                self.subState = 5
 
     def landOnBox(self):
-        box = self.highlightedBox
-        for i in range(3):
-            self.unHighlightBox(False)
-            self.pack(fill=BOTH, expand=True)
-            sleep(0.25)
-            self.highlightBox(box)
-            self.pack(fill=BOTH, expand=True)
-            sleep(0.25)
+        box = self.boxes[self.highlightedBox]
+        box.affect(self.players[self.spinningPlayer])
+
+        if box.value == 0:
+            statusText = {str(self.spinningPlayer): "Oh no! You got Whammied!"}
+        else:
+            statusText = {str(self.spinningPlayer): "Congratulations! ${} was\nadded to your bank!".format(box.value)}
+        self.displayPlayers(**statusText)
+        
+        if self.players[self.spinningPlayer].passedSpins > 0:
+            self.players[self.spinningPlayer].passedSpins -= 1
+        elif self.players[self.spinningPlayer].spins > 0:
+            self.players[self.spinningPlayer].spins -= 1
+        
+        if self.players[self.spinningPlayer].spins + self.players[self.spinningPlayer].passedSpins == 0:
+            self.playersRemaining -= 1
+            if self.playersRemaining <= 0:
+                self.roundsRemaining -= 1
+                if self.roundsRemaining == 0:
+                    self.gameState += 1
+                else:
+                    self.gameState -= 1
+            else:
+                if self.spinningPlayer == len(self.players) - 1:
+                    self.spinningPlayer = 0
+                else:
+                    self.spinningPlayer += 1
+        else:
+            self.subState = 0
 
             
-        self.boxes[self.highlightedBox].affect(self.spinningPlayer)
 
     #####################
     #   Logic Handler   #
@@ -299,17 +387,19 @@ class GameGui(Frame):
                 self.subState += 1
             else:
                 self.waitTick()
-                if self.handleButton:
-                    self.buttonPress
-                    self.gameState += 1
-                else:
-                    self.subState += 1
+            
+            if self.handleButton:
+                self.buttonPress
+                self.questionsRemaining = QUESTIONSPERROUND
+                self.gameState += 1
+            else:
+                self.subState += 1
 
         elif currState == 1:        #Trivia
             if self.subState == 0:
                 self.startQuestion()
             elif self.subState == 1:
-                self.awaitButton()
+                self.awaitBuzzIn()
             elif self.subState == 2:
                 self.awaitAnswer(True)
             elif self.subState == 3:
@@ -320,7 +410,7 @@ class GameGui(Frame):
         elif currState == 2:        #spin
             if self.subState == 0:
                 self.startSpin()
-            elif self.subState == 1:
+            elif self.subState in range(1,5):
                 self.awaitSpin()
                 self.waitTick()
             elif self.subState == 5:
