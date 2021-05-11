@@ -38,8 +38,8 @@ class Whammy(Box):
         # self.img = "Whammy"
 
     def affect(self, player):
-        Player.bank = 0
-        Player.whammies += 1
+        player.bank = 0
+        player.whammies += 1
 
 class SpinGame:
 
