@@ -11,17 +11,6 @@ class TriviaGame:
 						#3-waiting for 3rd response, 4-revealing answer
         self.stateTime = 0 #keep track of the amount of time we've been in this state
 
-	#function to cycle through states
-    def nextState(self, forceState:int = None):
-        if forceState is not None:
-            self.state = forceState
-        elif self.state >=4:
-            self.state = 0
-        else:
-            self.state += 1
-        
-        self.stateTime = 0
-
     def generateQuestion(self):
         x = randint(0,len(questions)-1)
         currentQuestion = questions[x]
@@ -41,7 +30,7 @@ q4 = Question("Where can you find the oldest ancinet wonder of the world? \n\n A
 questions.append(q4)
 q5 = Question("What is the most densely populated U.S. state? \n\n A: Connecticut \n B: New Jersey \n C: Rhode Island",1)
 questions.append(q5)
-q6 = Question("How many red stripes are there on the U.S. flag? \\n A: 6 \n B: 5 \n C: 7",2)
+q6 = Question("How many red stripes are there on the U.S. flag? \n\n A: 6 \n B: 5 \n C: 7",2)
 questions.append(q6)
 q7 = Question("What is the color of Donald Duck’s bowtie? \n\n A: White \n B: Red \n C: Blue",1)
 questions.append(q7)

@@ -3,9 +3,11 @@ import random
 
 class Box(PhotoImage):
     def __init__(self, img:str, value:int):
-            PhotoImage.__init__(file=img, bg='dim gray', borderwidth=10)
-            self.value = value
+        PhotoImage.__init__(self, file=img)
+        self.value = value
     
+    def affect(self, player):
+        player.bank += self.value
 
 # a prize box is
 # - an int value
@@ -15,12 +17,12 @@ class Box(PhotoImage):
 # - a fn that adds its value to the players bank
 class PrizeBox(Box):
     def __init__(self, img, value):
-        Box.__init__(img,value)
+        Box.__init__(self, img,value)
         raise NotImplementedError
 
-    def affect(Player):
-        Player.bank += self.value
-        
+    def affect(self, player):
+        player.bank += self.value
+
         
 # a whammy is
 # - a box with specific conditions
@@ -31,21 +33,17 @@ class PrizeBox(Box):
 # - maybe a function that clears a players bank and adds a whammy to their whammy count
 class Whammy(Box):
     def __init__(self):
-        Box.__init__(img, 0)
-        #img = "Whammy{}.png".format(randint(1,10))
-        self.img = "Whammy"
+        img = "Whammies/Whammy{}.png".format(random.randint(1,10))
+        Box.__init__(self, img, 0)
+        # self.img = "Whammy"
 
-    def affect(Player):
-        Player.bank = 0
-        Player.whammies += 1
-        
+    def affect(self, player):
+        player.bank = 0
+        player.whammies += 1
 
 class SpinGame:
 
     def __init__(self):
-        self.numBoxes = 18
-        self.numWhammies = 4
-
         self.prizes = list()
         self.prizes.append("$2000")
         self.prizes.append("$2250")
@@ -73,8 +71,8 @@ class SpinGame:
         self.prizes.append("Boston")
         self.prizes.append("Bracelet")
         self.prizes.append("Brassbed")
-        self.prizes.append("Brasil")
-        self.prizes.append("Britian")
+        self.prizes.append("Brazil")
+        self.prizes.append("Britain")
         self.prizes.append("Calgary")
         self.prizes.append("Canadianrockies")
         self.prizes.append("Cancun")
@@ -148,16 +146,24 @@ class SpinGame:
         self.cost.append(150)
         self.cost.append(900)
 
+        self.numBoxes = 18
+        self.numWhammies = 3
+
     def populate(self):
-        values = random.sample(len(self.prizes), self.numBoxes-self.numWhammies)
+        values = random.sample(range(len(self.prizes)), self.numBoxes-self.numWhammies)
         bigBoard = []
         for i in range(self.numBoxes):
             if i < self.numBoxes - self.numWhammies:
-                bigBoard.append(Box("Big Board Images/" + self.prizes[values[i]], self.cost[values[i]]))
+                bigBoard.append(Box("Big Board Images/" + self.prizes[values[i]] + ".png", self.cost[values[i]]))
             else:
                 bigBoard.append(Whammy())
         
         random.shuffle(bigBoard)
         return bigBoard
+                
+    def addWhammies(bigBoard,value):
+        j = 0
+        while j < value:
+            bigBoard.append(Whammy())
 
 #PhotoImage(file="{}.png")
